@@ -14,9 +14,6 @@ import (
 )
 
 func mergeProfiles(p *cover.Profile, merge *cover.Profile) {
-	if p.Mode != merge.Mode {
-		log.Fatalf("cannot merge profiles with different modes")
-	}
 	// Since the blocks are sorted, we can keep track of where the last block
 	// was inserted and only look at the blocks after that as targets for merge
 	startIndex := 0
@@ -40,7 +37,15 @@ func mergeProfileBlock(p *cover.Profile, pb cover.ProfileBlock, startIndex int) 
 		if p.Blocks[i].EndLine != pb.EndLine || p.Blocks[i].EndCol != pb.EndCol {
 			log.Fatalf("OVERLAP MERGE: %v %v %v", p.FileName, p.Blocks[i], pb)
 		}
-		p.Blocks[i].Count |= pb.Count
+
+		switch p.Mode {
+		case "set":
+			p.Blocks[i].Count |= pb.Count
+		case "count", "atomic":
+			p.Blocks[i].Count += pb.Count
+		default:
+			log.Fatalf("unsupported mode: %s", p.Mode)
+		}
 	} else {
 		if i > 0 {
 			pa := p.Blocks[i-1]
@@ -89,6 +94,7 @@ func main() {
 	flag.Parse()
 
 	var merged []*cover.Profile
+	var mode string = ""
 
 	for _, file := range flag.Args() {
 		profiles, err := cover.ParseProfiles(file)
@@ -96,6 +102,11 @@ func main() {
 			log.Fatalf("failed to parse profiles: %v", err)
 		}
 		for _, p := range profiles {
+			if mode == "" {
+				mode = p.Mode
+			} else if p.Mode != mode {
+				log.Fatalf("all profiles must be the same mode")
+			}
 			merged = addProfile(merged, p)
 		}
 	}
