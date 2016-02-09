@@ -49,13 +49,13 @@ func mergeProfileBlock(p *cover.Profile, pb cover.ProfileBlock, startIndex int) 
 	} else {
 		if i > 0 {
 			pa := p.Blocks[i-1]
-			if pa.EndLine >= pb.EndLine && (pa.EndLine != pb.EndLine || pa.EndCol > pb.EndCol) {
+			if pa.EndLine >= pb.StartLine && (pa.EndLine != pb.StartLine || pa.EndCol > pb.StartCol) {
 				log.Fatalf("OVERLAP BEFORE: %v %v %v", p.FileName, pa, pb)
 			}
 		}
-		if i < len(p.Blocks)-1 {
-			pa := p.Blocks[i+1]
-			if pa.StartLine <= pb.StartLine && (pa.StartLine != pb.StartLine || pa.StartCol < pb.StartCol) {
+		if i < len(p.Blocks) {
+			pa := p.Blocks[i]
+			if pa.StartLine <= pb.EndLine && (pa.StartLine != pb.EndLine || pa.StartCol < pb.EndCol) {
 				log.Fatalf("OVERLAP AFTER: %v %v %v", p.FileName, pa, pb)
 			}
 		}
